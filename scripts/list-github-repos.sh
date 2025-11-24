@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script para listar repositórios do GitHub
-# Uso: ./list-github-repos.sh SEU_TOKEN_AQUI
+# Uso: ./scripts/list-github-repos.sh SEU_TOKEN_AQUI
 
 if [ -z "$1" ]; then
     echo "Erro: Token do GitHub não fornecido"
