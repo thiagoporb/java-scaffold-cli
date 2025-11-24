@@ -82,6 +82,18 @@ O plugin Gatling está configurado no `pom.xml` gerado com:
 
 A configuração não requer dependências explícitas do Netty, pois o Gatling já inclui todas as dependências necessárias, evitando conflitos de versão.
 
+## Fluxo de Trabalho (GitFlow)
+
+Este projeto segue o modelo **GitFlow** para gerenciamento de branches e releases.
+
+- **`main`**: Código estável e testado, pronto para produção
+- **`develop`**: Branch principal de desenvolvimento
+- **`feature/*`**: Novas funcionalidades
+- **`release/*`**: Preparação de releases
+- **`hotfix/*`**: Correções urgentes em produção
+
+Para mais detalhes sobre o GitFlow, consulte o arquivo [GITFLOW.md](GITFLOW.md).
+
 ## Próximos passos sugeridos
 
 - Rodar o CLI para criar um novo serviço base.
