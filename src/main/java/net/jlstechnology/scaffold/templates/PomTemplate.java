@@ -1,0 +1,438 @@
+package net.jlstechnology.scaffold.templates;
+
+import net.jlstechnology.scaffold.core.ExecutionProfile;
+import net.jlstechnology.scaffold.core.ScaffoldConfig;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+/**
+ * Responsável por montar o conteúdo do arquivo pom.xml do projeto gerado.
+ */
+public final class PomTemplate {
+
+    private PomTemplate() {
+        // Classe utilitária, não deve ser instanciada.
+    }
+
+    /**
+     * Constrói o conteúdo completo do pom.xml.
+     *
+     * @param config configuração do scaffold.
+     * @return texto final para gravação.
+     */
+    public static String render(ScaffoldConfig config) {
+        String profilesSection = buildProfilesSection(config);
+        String template = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                    <modelVersion>4.0.0</modelVersion>
+
+                    <!-- Identificação do projeto -->
+                    <groupId>%s</groupId>
+                    <artifactId>%s</artifactId>
+                    <version>0.0.1-SNAPSHOT</version>
+                    <packaging>jar</packaging>
+
+                    <name>%s</name>
+                    <description>Projeto base gerado automaticamente para serviços Spring Boot</description>
+
+                    <!-- Propriedades do projeto e versões de dependências -->
+                    <properties>
+                        <java.version>21</java.version>
+                        <maven.compiler.source>${java.version}</maven.compiler.source>
+                        <maven.compiler.target>${java.version}</maven.compiler.target>
+                        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+                        <spring-boot.version>3.5.8</spring-boot.version>
+                        <openapi.generator.version>7.7.0</openapi.generator.version>
+                        <spotless.version>2.43.0</spotless.version>
+                        <modernizer.version>3.2.0</modernizer.version>
+                        <jacoco.version>0.8.12</jacoco.version>
+                        <sonar.version>3.10.0.2594</sonar.version>
+                        <archunit.version>1.3.0</archunit.version>
+                        <springdoc.version>2.8.14</springdoc.version>
+                        <gatling.version>3.13.5</gatling.version>
+                        <gatling.plugin.version>4.16.3</gatling.plugin.version>
+                        <openapi.generator.input>src/main/resources/openapi/%s-dev.yaml</openapi.generator.input>
+                        <openapi.generator.output>${project.build.directory}/generated-sources/openapi</openapi.generator.output>
+                        <openapi.generator.package>%s.web.api</openapi.generator.package>
+                    </properties>
+
+                    <!-- Gerenciamento centralizado de versões de dependências -->
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.springframework.boot</groupId>
+                                <artifactId>spring-boot-dependencies</artifactId>
+                                <version>${spring-boot.version}</version>
+                                <type>pom</type>
+                                <scope>import</scope>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+
+                    <!-- Dependências do projeto -->
+                    <dependencies>
+                        <!-- Spring Boot Starter Core -->
+                        <dependency>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-starter</artifactId>
+                        </dependency>
+                        <!-- Spring Boot Web (REST APIs) -->
+                        <dependency>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-starter-web</artifactId>
+                        </dependency>
+                        <!-- Spring Boot Actuator (monitoramento e métricas) -->
+                        <dependency>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-starter-actuator</artifactId>
+                        </dependency>
+                        <!-- Spring Boot Data JPA (persistência) -->
+                        <dependency>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-starter-data-jpa</artifactId>
+                        </dependency>
+                        <!-- PostgreSQL Driver -->
+                        <dependency>
+                            <groupId>org.postgresql</groupId>
+                            <artifactId>postgresql</artifactId>
+                            <scope>runtime</scope>
+                        </dependency>
+                        <!-- Lombok (redução de boilerplate) -->
+                        <dependency>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <optional>true</optional>
+                        </dependency>
+                        <!-- Jakarta Validation API (validação de dados) -->
+                        <dependency>
+                            <groupId>jakarta.validation</groupId>
+                            <artifactId>jakarta.validation-api</artifactId>
+                        </dependency>
+                        <!-- SpringDoc OpenAPI API (anotações e modelos para documentação da API) -->
+                        <dependency>
+                            <groupId>org.springdoc</groupId>
+                            <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+                            <version>${springdoc.version}</version>
+                        </dependency>
+                        <!-- SpringDoc OpenAPI UI (interface web para documentação da API) -->
+                        <dependency>
+                            <groupId>org.springdoc</groupId>
+                            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                            <version>${springdoc.version}</version>
+                        </dependency>
+                        <!-- Spring Boot Test (testes) -->
+                        <dependency>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-starter-test</artifactId>
+                            <scope>test</scope>
+                        </dependency>
+                        <!-- JUnit 5 (framework de testes) -->
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.11.3</version>
+                            <scope>test</scope>
+                        </dependency>
+                        <!-- Mockito (mocks para testes) -->
+                        <dependency>
+                            <groupId>org.mockito</groupId>
+                            <artifactId>mockito-core</artifactId>
+                            <version>5.12.0</version>
+                            <scope>test</scope>
+                        </dependency>
+                        <!-- ArchUnit (testes de arquitetura) -->
+                        <dependency>
+                            <groupId>com.tngtech.archunit</groupId>
+                            <artifactId>archunit-junit5-engine</artifactId>
+                            <version>${archunit.version}</version>
+                            <scope>test</scope>
+                        </dependency>
+                        <!-- H2 Database (banco em memória para testes) -->
+                        <dependency>
+                            <groupId>com.h2database</groupId>
+                            <artifactId>h2</artifactId>
+                            <scope>test</scope>
+                        </dependency>
+                        <!-- Gatling (testes de carga e desempenho) -->
+                        <dependency>
+                            <groupId>io.gatling.highcharts</groupId>
+                            <artifactId>gatling-charts-highcharts</artifactId>
+                            <version>${gatling.version}</version>
+                            <scope>test</scope>
+                        </dependency>
+                    </dependencies>
+
+                    <!-- Configuração de build e plugins -->
+                    <build>
+                        <plugins>
+                            <!-- Plugin Maven Compiler (compilação Java) -->
+                            <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-compiler-plugin</artifactId>
+                                <version>3.13.0</version>
+                                <configuration>
+                                    <source>${java.version}</source>
+                                    <target>${java.version}</target>
+                                    <encoding>${project.build.sourceEncoding}</encoding>
+                                </configuration>
+                            </plugin>
+                            <!-- Plugin Spring Boot (empacotamento e execução) -->
+                            <plugin>
+                                <groupId>org.springframework.boot</groupId>
+                                <artifactId>spring-boot-maven-plugin</artifactId>
+                                <version>${spring-boot.version}</version>
+                                <configuration>
+                                    <mainClass>%s.%sApplication</mainClass>
+                                </configuration>
+                                <executions>
+                                    <execution>
+                                        <goals>
+                                            <goal>repackage</goal>
+                                        </goals>
+                                    </execution>
+                                </executions>
+                            </plugin>
+                            <!-- Plugin OpenAPI Generator (geração de código a partir de contratos OpenAPI) -->
+                            <plugin>
+                                <groupId>org.openapitools</groupId>
+                                <artifactId>openapi-generator-maven-plugin</artifactId>
+                                <version>${openapi.generator.version}</version>
+                                <executions>
+                                    <execution>
+                                        <id>generate-contract</id>
+                                        <phase>generate-sources</phase>
+                                        <goals>
+                                            <goal>generate</goal>
+                                        </goals>
+                                        <configuration>
+                                            <inputSpec>${project.basedir}/${openapi.generator.input}</inputSpec>
+                                            <generatorName>spring</generatorName>
+                                            <apiPackage>${openapi.generator.package}</apiPackage>
+                                            <modelPackage>%s.web.api.dto</modelPackage>
+                                            <modelNameSuffix>DTO</modelNameSuffix>
+                                            <generateSupportingFiles>true</generateSupportingFiles>
+                                            <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+                                            <skipValidateSpec>false</skipValidateSpec>
+                                            <output>${openapi.generator.output}</output>
+                                            <addCompileSourceRoot>true</addCompileSourceRoot>
+                                            <configOptions>
+                                                <interfaceOnly>true</interfaceOnly>
+                                                <useTags>true</useTags>
+                                                <dateLibrary>java8</dateLibrary>
+                                                <useSpringBoot3>true</useSpringBoot3>
+                                                <skipDefaultInterface>false</skipDefaultInterface>
+                                                <delegatePattern>false</delegatePattern>
+                                                <openApiNullable>false</openApiNullable>
+                                                <configPackage>%s.config</configPackage>
+                                            </configOptions>
+                                        </configuration>
+                                    </execution>
+                                </executions>
+                            </plugin>
+                            <!-- Plugin Spotless (formatação automática de código) -->
+                            <plugin>
+                                <groupId>com.diffplug.spotless</groupId>
+                                <artifactId>spotless-maven-plugin</artifactId>
+                                <version>${spotless.version}</version>
+                                <configuration>
+                                    <java>
+                                        <palantirJavaFormat/>
+                                        <removeUnusedImports/>
+                                    </java>
+                                </configuration>
+                                <executions>
+                                    <execution>
+                                        <id>spotless-apply</id>
+                                        <goals>
+                                            <goal>apply</goal>
+                                        </goals>
+                                        <phase>validate</phase>
+                                    </execution>
+                                </executions>
+                            </plugin>
+                            <!-- Plugin Modernizer (detecção de APIs Java obsoletas) -->
+                            <plugin>
+                                <groupId>org.gaul</groupId>
+                                <artifactId>modernizer-maven-plugin</artifactId>
+                                <version>${modernizer.version}</version>
+                                <configuration>
+                                    <javaVersion>${java.version}</javaVersion> <!-- Versão do Java para validação -->
+                                </configuration>
+                                <executions>
+                                    <execution>
+                                        <phase>verify</phase>
+                                        <goals>
+                                            <goal>modernizer</goal>
+                                        </goals>
+                                    </execution>
+                                </executions>
+                            </plugin>
+                            <!-- Plugin JaCoCo (cobertura de código) -->
+                            <plugin>
+                                <groupId>org.jacoco</groupId>
+                                <artifactId>jacoco-maven-plugin</artifactId>
+                                <version>${jacoco.version}</version>
+                                <configuration>
+                                    <!-- Exclui código gerado automaticamente da análise de cobertura -->
+                                    <excludes>
+                                        <exclude>**/web/api/**</exclude>
+                                        <exclude>**/Application.class</exclude>
+                                        <exclude>**/ApplicationTests.class</exclude>
+                                    </excludes>
+                                    <!-- Regras de validação de cobertura (disponíveis para execução direta e via verify) -->
+                                    <rules>
+                                        <rule>
+                                            <element>BUNDLE</element>
+                                            <limits>
+                                                <limit>
+                                                    <counter>INSTRUCTION</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.80</minimum> <!-- Validação mínima de 80%% de cobertura -->
+                                                </limit>
+                                                <limit>
+                                                    <counter>BRANCH</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.80</minimum> <!-- Validação mínima de 80%% de cobertura -->
+                                                </limit>
+                                                <limit>
+                                                    <counter>LINE</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.80</minimum> <!-- Validação mínima de 80%% de cobertura -->
+                                                </limit>
+                                                <limit>
+                                                    <counter>METHOD</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.80</minimum> <!-- Validação mínima de 80%% de cobertura -->
+                                                </limit>
+                                                <limit>
+                                                    <counter>CLASS</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.80</minimum> <!-- Validação mínima de 80%% de cobertura -->
+                                                </limit>
+                                            </limits>
+                                        </rule>
+                                    </rules>
+                                </configuration>
+                                <executions>
+                                    <!-- Prepara o agente JaCoCo antes dos testes -->
+                                    <execution>
+                                        <id>jacoco-prepare-agent</id>
+                                        <phase>initialize</phase>
+                                        <goals>
+                                            <goal>prepare-agent</goal>
+                                        </goals>
+                                    </execution>
+                                    <!-- Gera relatório de cobertura após os testes -->
+                                    <execution>
+                                        <id>jacoco-report</id>
+                                        <phase>test</phase>
+                                        <goals>
+                                            <goal>report</goal>
+                                        </goals>
+                                    </execution>
+                                    <!-- Valida cobertura mínima durante verify -->
+                                    <execution>
+                                        <id>jacoco-check</id>
+                                        <phase>verify</phase>
+                                        <goals>
+                                            <goal>check</goal>
+                                        </goals>
+                                    </execution>
+                                </executions>
+                            </plugin>
+                            <!-- Plugin Gatling (testes de carga) -->
+                            <plugin>
+                                <groupId>io.gatling</groupId>
+                                <artifactId>gatling-maven-plugin</artifactId>
+                                <version>${gatling.plugin.version}</version>
+                                <configuration>
+                                    <runMultipleSimulations>true</runMultipleSimulations>
+                                    <includes>
+                                        <include>%s.gatling.simulation.BasicSimulation</include>
+                                    </includes>
+                                </configuration>
+                            </plugin>
+                            <!-- Plugin Sonar (análise estática de código) -->
+                            <!-- 
+                                Parâmetros do SonarQube devem ser passados via propriedades Maven ou variáveis de ambiente.
+                                Exemplo: mvn sonar:sonar -Dsonar.host.url=http://localhost:9000 -Dsonar.login=seu-token -Dsonar.password=sua-senha
+                                
+                                Parâmetros recomendados:
+                                - sonar.host.url: URL do servidor SonarQube (padrão: http://localhost:9000)
+                                - sonar.login: Usuário ou token de autenticação
+                                - sonar.password: Senha (se usar login/password ao invés de token)
+                                - sonar.token: Token de autenticação (alternativa a login/password)
+                                - sonar.projectKey: Chave do projeto (formato: groupId:artifactId)
+                                - sonar.projectName: Nome do projeto
+                                - sonar.sources: Diretórios de código fonte (padrão: src/main/java)
+                                - sonar.tests: Diretórios de testes (padrão: src/test/java)
+                                - sonar.exclusions: Padrões de exclusão (ex: **/web/api/**,**/Application.class)
+                            -->
+                            <plugin>
+                                <groupId>org.sonarsource.scanner.maven</groupId>
+                                <artifactId>sonar-maven-plugin</artifactId>
+                                <version>${sonar.version}</version>
+                            </plugin>
+                        </plugins>
+                    </build>
+
+                    <!-- Profiles Maven para diferentes ambientes -->
+                    <profiles>
+                %s
+                    </profiles>
+                </project>
+                """;
+        return String.format(
+                java.util.Locale.ROOT,
+                template,
+                config.groupId(),                    // 1: groupId
+                config.artifactId(),                 // 2: artifactId
+                config.artifactId(),                 // 3: name
+                config.artifactLowerCase(),           // 4: openapi.generator.input
+                config.basePackage(),                 // 5: openapi.generator.package
+                config.basePackage(),                 // 6: mainClass (package)
+                config.artifactPascalCase(),          // 7: mainClass (class name)
+                config.basePackage(),                 // 8: modelPackage
+                config.basePackage(),                 // 9: configPackage
+                config.basePackage(),                 // 10: gatling include
+                profilesSection);                     // 11: profiles
+    }
+
+    private static String buildProfilesSection(ScaffoldConfig config) {
+        return Arrays.stream(ExecutionProfile.values())
+                .map(profile -> buildProfileEntry(profile, config.artifactLowerCase()))
+                .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    private static String buildProfileEntry(ExecutionProfile profile, String artifactLower) {
+        String activationBlock = profile == ExecutionProfile.DEV
+                ? """
+                            <activation>
+                                <activeByDefault>true</activeByDefault>
+                            </activation>
+                """
+                : "";
+        String profileComment = switch (profile) {
+            case DEV -> "<!-- Profile de desenvolvimento (ativo por padrão) -->";
+            case HOMOL -> "<!-- Profile de homologação -->";
+            case PROD -> "<!-- Profile de produção -->";
+            case DOCKER -> "<!-- Profile para ambiente Docker -->";
+            case DOCKER_EXTERNO -> "<!-- Profile para ambiente Docker externo -->";
+        };
+        return ("""
+                        %4$s
+                        <profile>
+                            <id>%1$s</id>
+                %3$s            <properties>
+                                <spring.profiles.active>%1$s</spring.profiles.active>
+                                <openapi.generator.input>src/main/resources/openapi/%2$s-%1$s.yaml</openapi.generator.input>
+                            </properties>
+                        </profile>""").formatted(profile.profileName(), artifactLower, activationBlock, profileComment);
+    }
+
+}
+
