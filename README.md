@@ -92,7 +92,7 @@ Este projeto segue o modelo **GitFlow** para gerenciamento de branches e release
 - **`release/*`**: Preparação de releases
 - **`hotfix/*`**: Correções urgentes em produção
 
-Para mais detalhes sobre o GitFlow, consulte o arquivo [GITFLOW.md](GITFLOW.md).
+Para mais detalhes sobre o GitFlow, consulte o arquivo [docs/GITFLOW.md](docs/GITFLOW.md).
 
 ## Próximos passos sugeridos
 
