@@ -2,6 +2,34 @@
 
 Este projeto segue o modelo **GitFlow** para gerenciamento de branches e releases.
 
+## Script Helper
+
+Para facilitar o uso do GitFlow, este projeto inclui um script auxiliar: `scripts/gitflow-helper.sh`
+
+### Uso do Script Helper
+
+```bash
+# Criar feature branch
+./scripts/gitflow-helper.sh feature adicionar-validacao-cpf
+
+# Criar release branch
+./scripts/gitflow-helper.sh release 1.0.0
+
+# Criar hotfix branch
+./scripts/gitflow-helper.sh hotfix correcao-sql-injection
+
+# Finalizar feature branch
+./scripts/gitflow-helper.sh finish-feature adicionar-validacao-cpf
+
+# Finalizar release branch
+./scripts/gitflow-helper.sh finish-release 1.0.0
+
+# Finalizar hotfix branch (requer versão)
+./scripts/gitflow-helper.sh finish-hotfix correcao-sql-injection 1.0.1
+```
+
+O script automatiza a criação e finalização de branches seguindo as melhores práticas do GitFlow.
+
 ## Branches Principais
 
 ### `main` (Produção)
