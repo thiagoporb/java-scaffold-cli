@@ -29,7 +29,6 @@ jobs:
       - name: Validar Conventional Commits
         id: validate-commits
         run: |
-          set -e
           echo "=== DEBUG: Informações do Ambiente ==="
           echo "Base branch: ${{ github.base_ref }}"
           echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
@@ -80,8 +79,8 @@ jobs:
           invalid_commits=0
           total_commits=0
           
-          # Processar cada linha de commit
-          echo "$commits" | while IFS= read -r commit_msg; do
+          # Processar cada linha de commit usando here-string para evitar subshell
+          while IFS= read -r commit_msg || [ -n "$commit_msg" ]; do
             # Remove espaços em branco
             commit_msg=$(echo "$commit_msg" | xargs)
             
@@ -102,7 +101,7 @@ jobs:
               echo "     Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
               invalid_commits=$((invalid_commits + 1))
             fi
-          done
+          done <<< "$commits"
           
           echo ""
           echo "=== DEBUG: Resultado ==="
@@ -113,6 +112,12 @@ jobs:
             echo ""
             echo "❌ Encontrados $invalid_commits commit(s) inválido(s) de $total_commits total"
             exit 1
+          fi
+          
+          if [ $total_commits -eq 0 ]; then
+            echo ""
+            echo "⚠️ Nenhum commit foi processado"
+            exit 0
           fi
           
           echo ""
