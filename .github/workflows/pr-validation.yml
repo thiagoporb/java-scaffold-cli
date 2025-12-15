@@ -34,24 +34,45 @@ jobs:
           echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
           echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
           
-          # Fetch da branch base
+          # Fetch completo do histórico
+          git fetch --unshallow origin || git fetch origin || true
           git fetch origin ${{ github.base_ref }}:${{ github.base_ref }} || true
           
-          # Obter commits do PR usando SHA ao invés de branch name
-          base_sha="${{ github.event.pull_request.base.sha }}"
+          # Obter commits do PR - tentar múltiplos métodos
+          base_ref="${{ github.base_ref }}"
           head_sha="${{ github.event.pull_request.head.sha }}"
+          base_sha="${{ github.event.pull_request.base.sha }}"
           
-          if [ -z "$base_sha" ] || [ -z "$head_sha" ]; then
-            echo "⚠️ Não foi possível determinar SHA das branches, tentando método alternativo..."
-            commits=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s" 2>/dev/null || echo "")
-          else
+          commits=""
+          
+          # Método 1: Usar SHA se disponível
+          if [ -n "$base_sha" ] && [ -n "$head_sha" ]; then
+            echo "Tentando obter commits usando SHA..."
             commits=$(git log $base_sha..$head_sha --pretty=format:"%s" 2>/dev/null || echo "")
+          fi
+          
+          # Método 2: Usar branch names
+          if [ -z "$commits" ]; then
+            echo "Tentando obter commits usando branch names..."
+            commits=$(git log origin/$base_ref..HEAD --pretty=format:"%s" 2>/dev/null || echo "")
+          fi
+          
+          # Método 3: Usar merge-base
+          if [ -z "$commits" ]; then
+            echo "Tentando obter commits usando merge-base..."
+            merge_base=$(git merge-base origin/$base_ref HEAD 2>/dev/null || echo "")
+            if [ -n "$merge_base" ]; then
+              commits=$(git log $merge_base..HEAD --pretty=format:"%s" 2>/dev/null || echo "")
+            fi
           fi
           
           if [ -z "$commits" ]; then
             echo "⚠️ Nenhum commit encontrado para validar"
-            echo "Listando últimos 5 commits para debug:"
-            git log --oneline -5 || true
+            echo "Listando últimos 10 commits para debug:"
+            git log --oneline -10 || true
+            echo ""
+            echo "Branches disponíveis:"
+            git branch -a || true
             exit 0
           fi
           
@@ -61,14 +82,16 @@ jobs:
           
           invalid_commits=0
           while IFS= read -r commit_msg || [ -n "$commit_msg" ]; do
-            commit_msg=$(echo "$commit_msg" | xargs)  # Remove espaços em branco
-            if [ -n "$commit_msg" ]; then
-              if echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+"; then
+            # Remove espaços em branco e caracteres especiais
+            commit_msg=$(echo "$commit_msg" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [ -n "$commit_msg" ] && [ "$commit_msg" != "" ]; then
+              # Regex para Conventional Commits: tipo(escopo opcional): descrição
+              if echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([^)]+\))?: .+"; then
                 echo "✅ Commit válido: $commit_msg"
               else
                 echo "❌ Commit inválido: $commit_msg"
-                echo "Por favor, use Conventional Commits: tipo(escopo): descrição"
-                echo "Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
+                echo "   Formato esperado: tipo(escopo): descrição"
+                echo "   Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
                 invalid_commits=$((invalid_commits + 1))
               fi
             fi
