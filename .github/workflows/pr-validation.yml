@@ -30,29 +30,56 @@ jobs:
         id: validate-commits
         run: |
           echo "Validando mensagens de commit..."
+          echo "Base branch: ${{ github.base_ref }}"
+          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+          echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+          
+          # Fetch da branch base
           git fetch origin ${{ github.base_ref }}:${{ github.base_ref }} || true
-          commits=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s" 2>/dev/null || echo "")
+          
+          # Obter commits do PR usando SHA ao invés de branch name
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          
+          if [ -z "$base_sha" ] || [ -z "$head_sha" ]; then
+            echo "⚠️ Não foi possível determinar SHA das branches, tentando método alternativo..."
+            commits=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s" 2>/dev/null || echo "")
+          else
+            commits=$(git log $base_sha..$head_sha --pretty=format:"%s" 2>/dev/null || echo "")
+          fi
+          
           if [ -z "$commits" ]; then
             echo "⚠️ Nenhum commit encontrado para validar"
+            echo "Listando últimos 5 commits para debug:"
+            git log --oneline -5 || true
             exit 0
           fi
+          
+          echo "Commits encontrados para validação:"
+          echo "$commits"
+          echo ""
+          
           invalid_commits=0
-          while IFS= read -r commit_msg; do
+          while IFS= read -r commit_msg || [ -n "$commit_msg" ]; do
+            commit_msg=$(echo "$commit_msg" | xargs)  # Remove espaços em branco
             if [ -n "$commit_msg" ]; then
-              if ! echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+"; then
+              if echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+"; then
+                echo "✅ Commit válido: $commit_msg"
+              else
                 echo "❌ Commit inválido: $commit_msg"
                 echo "Por favor, use Conventional Commits: tipo(escopo): descrição"
                 echo "Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
                 invalid_commits=$((invalid_commits + 1))
-              else
-                echo "✅ Commit válido: $commit_msg"
               fi
             fi
           done <<< "$commits"
+          
           if [ $invalid_commits -gt 0 ]; then
+            echo ""
             echo "❌ Encontrados $invalid_commits commit(s) inválido(s)"
             exit 1
           fi
+          echo ""
           echo "✅ Todos os commits seguem Conventional Commits"
       
       - name: Compilar projeto
