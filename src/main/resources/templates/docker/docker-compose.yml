@@ -1,0 +1,189 @@
+# ============================================================
+# Docker Compose - Ambiente de Desenvolvimento Local
+# ============================================================
+# Este arquivo configura todos os serviços necessários para
+# rodar o sistema de microserviços localmente.
+#
+# USO:
+#   Subir tudo:     docker compose up -d
+#   Ver logs:       docker compose logs -f
+#   Parar tudo:     docker compose down
+#   Parar + limpar: docker compose down -v (APAGA DADOS!)
+#
+# ORDEM DE INICIALIZAÇÃO:
+#   1. PostgreSQL (banco de dados)
+#   2. SonarQube (análise estática) - depende do PostgreSQL
+#   3. Prometheus (métricas)
+#   4. Grafana (visualização) - depende do Prometheus
+#   5. %1$s-service (serviço gerado) - depende do PostgreSQL
+# ============================================================
+
+services:
+  # ============================================================
+  # POSTGRESQL - Banco de Dados
+  # ============================================================
+  # Um único servidor com múltiplos databases:
+  #   - %2$s (database principal do serviço)
+  #   - sonar (para o SonarQube)
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: %2$s
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "0.0.0.0:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-net
+
+  # ============================================================
+  # SONARQUBE - Análise Estática de Código
+  # ============================================================
+  # Analisa qualidade de código, cobertura de testes, bugs
+  #
+  # ACESSO:
+  #   UI: http://localhost:9000
+  #   Usuário padrão: admin
+  #   Senha padrão: admin
+  #
+  # IMPORTANTE: O SonarQube utiliza o mesmo container PostgreSQL.
+  # O banco 'sonar' será criado automaticamente pelo script SQL.
+  # ============================================================
+  sonarqube:
+    image: sonarqube:10.4-community
+    container_name: sonarqube
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
+      SONAR_JDBC_USERNAME: ${POSTGRES_USER:-postgres}
+      SONAR_JDBC_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/api/system/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - microservices-net
+
+  # ============================================================
+  # PROMETHEUS - Coleta de Métricas
+  # ============================================================
+  # Coleta métricas dos microserviços (CPU, memória, requisições)
+  #
+  # ACESSO:
+  #   UI: http://localhost:9090
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - microservices-net
+
+  # ============================================================
+  # GRAFANA - Visualização de Métricas
+  # ============================================================
+  # Dashboards para visualizar métricas e traces
+  #
+  # ACESSO:
+  #   UI: http://localhost:3000
+  #   Usuário: admin
+  #   Senha: admin
+  # ============================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - microservices-net
+
+  # ============================================================
+  # %1$s-SERVICE - Microserviço Gerado
+  # ============================================================
+  # Spring Boot 4.0.0 - Serviço gerado pelo scaffold
+  #
+  # ACESSO:
+  #   API: http://localhost:8081/api
+  #   Actuator: http://localhost:8081/api/actuator/health
+  # ============================================================
+  %1$s-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: %1$s-service
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+# ============================================================
+# VOLUMES - Persistência de Dados
+# ============================================================
+volumes:
+  postgres_data:
+    name: microservices_postgres_data
+  sonarqube_data:
+    name: microservices_sonarqube_data
+  sonarqube_extensions:
+    name: microservices_sonarqube_extensions
+  sonarqube_logs:
+    name: microservices_sonarqube_logs
+  prometheus_data:
+    name: microservices_prometheus_data
+  grafana_data:
+    name: microservices_grafana_data
+
+# ============================================================
+# NETWORKS - Rede Docker
+# ============================================================
+# Todos os containers ficam na mesma rede e podem se comunicar
+# usando o nome do serviço (ex: postgres, sonarqube, prometheus)
+# ============================================================
+networks:
+  microservices-net:
+    name: microservices-net
+    driver: bridge
+

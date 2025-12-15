@@ -1,0 +1,42 @@
+# ============================================================
+# Prometheus - Configuração de Coleta de Métricas
+# ============================================================
+# Prometheus coleta métricas dos serviços a cada 15 segundos
+# e as armazena para consulta posterior.
+# ============================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # ============================================================
+  # Prometheus (auto-monitoramento)
+  # ============================================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ============================================================
+  # %1$s-service - Spring Boot Actuator
+  # ============================================================
+  # Coleta métricas do endpoint /actuator/prometheus
+  # ============================================================
+  - job_name: '%1$s-service'
+    metrics_path: '/api/actuator/prometheus'
+    static_configs:
+      - targets: ['%1$s-service:8081']
+    # Adiciona labels para identificar o serviço
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: '%1$s-service'
+
+  # ============================================================
+  # Futuros serviços podem ser adicionados aqui
+  # ============================================================
+  # - job_name: 'order-service'
+  #   metrics_path: '/api/actuator/prometheus'
+  #   static_configs:
+  #     - targets: ['order-service:8082']
+
