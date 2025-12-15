@@ -88,6 +88,24 @@ jobs:
               continue
             fi
             
+            # Ignorar commits de merge automáticos do GitHub
+            if echo "$commit_msg" | grep -qE "^Merge .+ into .+"; then
+              echo "⏭️  Ignorando commit de merge automático: '$commit_msg'"
+              continue
+            fi
+            
+            # Ignorar commits de merge de branches (padrão Git)
+            if echo "$commit_msg" | grep -qE "^Merge branch .+"; then
+              echo "⏭️  Ignorando commit de merge de branch: '$commit_msg'"
+              continue
+            fi
+            
+            # Ignorar commits de merge de PRs
+            if echo "$commit_msg" | grep -qE "^Merge pull request"; then
+              echo "⏭️  Ignorando commit de merge de PR: '$commit_msg'"
+              continue
+            fi
+            
             total_commits=$((total_commits + 1))
             echo "Validando: '$commit_msg'"
             
