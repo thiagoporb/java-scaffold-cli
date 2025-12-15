@@ -29,81 +29,94 @@ jobs:
       - name: Validar Conventional Commits
         id: validate-commits
         run: |
-          echo "Validando mensagens de commit..."
+          set -e
+          echo "=== DEBUG: Informações do Ambiente ==="
           echo "Base branch: ${{ github.base_ref }}"
           echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
           echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+          echo "Head ref: ${{ github.head_ref }}"
+          echo "Base ref: ${{ github.base_ref }}"
+          echo ""
           
-          # Fetch completo do histórico
-          git fetch --unshallow origin || git fetch origin || true
-          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }} || true
+          echo "=== DEBUG: Estado do Git ==="
+          git log --oneline -5 || true
+          echo ""
+          git branch -a || true
+          echo ""
           
-          # Obter commits do PR - tentar múltiplos métodos
-          base_ref="${{ github.base_ref }}"
-          head_sha="${{ github.event.pull_request.head.sha }}"
-          base_sha="${{ github.event.pull_request.base.sha }}"
+          # Fetch da branch base
+          echo "=== DEBUG: Fetching branches ==="
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }} 2>&1 || echo "⚠️ Falha ao fazer fetch da base"
+          echo ""
           
-          commits=""
+          # Obter commits usando merge-base (método mais confiável)
+          echo "=== DEBUG: Obtendo merge-base ==="
+          merge_base=$(git merge-base origin/${{ github.base_ref }} HEAD 2>&1 || echo "")
+          echo "Merge base: $merge_base"
           
-          # Método 1: Usar SHA se disponível
-          if [ -n "$base_sha" ] && [ -n "$head_sha" ]; then
-            echo "Tentando obter commits usando SHA..."
-            commits=$(git log $base_sha..$head_sha --pretty=format:"%s" 2>/dev/null || echo "")
+          if [ -z "$merge_base" ] || [ "$merge_base" = "" ]; then
+            echo "⚠️ Não foi possível determinar merge-base"
+            echo "Tentando método alternativo..."
+            commits=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s" 2>&1 || echo "")
+          else
+            commits=$(git log $merge_base..HEAD --pretty=format:"%s" 2>&1 || echo "")
           fi
           
-          # Método 2: Usar branch names
-          if [ -z "$commits" ]; then
-            echo "Tentando obter commits usando branch names..."
-            commits=$(git log origin/$base_ref..HEAD --pretty=format:"%s" 2>/dev/null || echo "")
-          fi
-          
-          # Método 3: Usar merge-base
-          if [ -z "$commits" ]; then
-            echo "Tentando obter commits usando merge-base..."
-            merge_base=$(git merge-base origin/$base_ref HEAD 2>/dev/null || echo "")
-            if [ -n "$merge_base" ]; then
-              commits=$(git log $merge_base..HEAD --pretty=format:"%s" 2>/dev/null || echo "")
-            fi
-          fi
-          
-          if [ -z "$commits" ]; then
+          echo ""
+          echo "=== DEBUG: Commits encontrados ==="
+          if [ -z "$commits" ] || [ "$commits" = "" ]; then
             echo "⚠️ Nenhum commit encontrado para validar"
-            echo "Listando últimos 10 commits para debug:"
+            echo "Listando últimos 10 commits:"
             git log --oneline -10 || true
             echo ""
-            echo "Branches disponíveis:"
-            git branch -a || true
+            echo "⚠️ Pulando validação - nenhum commit novo encontrado"
             exit 0
           fi
           
-          echo "Commits encontrados para validação:"
           echo "$commits"
           echo ""
+          echo "=== DEBUG: Validando commits ==="
           
           invalid_commits=0
-          while IFS= read -r commit_msg || [ -n "$commit_msg" ]; do
-            # Remove espaços em branco e caracteres especiais
-            commit_msg=$(echo "$commit_msg" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-            if [ -n "$commit_msg" ] && [ "$commit_msg" != "" ]; then
-              # Regex para Conventional Commits: tipo(escopo opcional): descrição
-              if echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([^)]+\))?: .+"; then
-                echo "✅ Commit válido: $commit_msg"
-              else
-                echo "❌ Commit inválido: $commit_msg"
-                echo "   Formato esperado: tipo(escopo): descrição"
-                echo "   Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
-                invalid_commits=$((invalid_commits + 1))
-              fi
+          total_commits=0
+          
+          # Processar cada linha de commit
+          echo "$commits" | while IFS= read -r commit_msg; do
+            # Remove espaços em branco
+            commit_msg=$(echo "$commit_msg" | xargs)
+            
+            if [ -z "$commit_msg" ] || [ "$commit_msg" = "" ]; then
+              continue
             fi
-          done <<< "$commits"
+            
+            total_commits=$((total_commits + 1))
+            echo "Validando: '$commit_msg'"
+            
+            # Regex para Conventional Commits
+            # Aceita: tipo(escopo opcional): descrição
+            if echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([^)]+\))?: .+"; then
+              echo "  ✅ Válido"
+            else
+              echo "  ❌ Inválido"
+              echo "     Formato esperado: tipo(escopo): descrição"
+              echo "     Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
+              invalid_commits=$((invalid_commits + 1))
+            fi
+          done
+          
+          echo ""
+          echo "=== DEBUG: Resultado ==="
+          echo "Total de commits: $total_commits"
+          echo "Commits inválidos: $invalid_commits"
           
           if [ $invalid_commits -gt 0 ]; then
             echo ""
-            echo "❌ Encontrados $invalid_commits commit(s) inválido(s)"
+            echo "❌ Encontrados $invalid_commits commit(s) inválido(s) de $total_commits total"
             exit 1
           fi
+          
           echo ""
-          echo "✅ Todos os commits seguem Conventional Commits"
+          echo "✅ Todos os $total_commits commit(s) seguem Conventional Commits"
       
       - name: Compilar projeto
         id: compile
