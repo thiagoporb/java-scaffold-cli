@@ -1,0 +1,64 @@
+# ============================================================
+# Configurações Principais
+# ============================================================
+# Este arquivo contém configurações comuns a todos os ambientes.
+# Configurações específicas ficam em application-{profile}.yml
+# ============================================================
+
+spring:
+  application:
+    name: app
+  # ============================================================
+  # JACKSON (JSON) - Spring Boot 4.0 usa Jackson 3.0
+  # ============================================================
+  # Configurações do Jackson são aplicadas automaticamente pelo Spring Boot 4.0
+  # Para configurações customizadas, use @JsonFormat ou ObjectMapper bean
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+  # ============================================================
+  # DATASOURCE - HikariCP (pool de conexões de alto desempenho)
+  # ============================================================
+  datasource:
+    hikari:
+      maximum-pool-size: 10 # Número máximo de conexões no pool
+      minimum-idle: 5 # Número mínimo de conexões ociosas mantidas no pool
+      idle-timeout: 300000 # Tempo em milissegundos antes de fechar conexões ociosas (5 minutos)
+      max-lifetime: 1800000 # Tempo máximo de vida de uma conexão em milissegundos (30 minutos)
+      connection-timeout: 30000 # Timeout em milissegundos para obter uma conexão do pool (30 segundos)
+      leak-detection-threshold: 60000 # Threshold em milissegundos para detectar vazamentos de conexão (1 minuto)
+
+# ============================================================
+# SERVER
+# ============================================================
+server:
+  port: 8081
+  servlet:
+    context-path: /api
+
+# ============================================================
+# ACTUATOR (Health, Metrics, Info)
+# ============================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  # Métricas detalhadas
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
