@@ -93,13 +93,29 @@ public final class ProjectGenerator {
     }
 
     private void createDockerFiles(ScaffoldConfig config) throws IOException {
+        // Criar estrutura docker/ em src/main/docker
         Path dockerDir = config.projectRoot().resolve("src/main/docker");
-        writeFile(dockerDir.resolve("postgres-compose.yml"), DockerComposeTemplate.renderPostgres(config));
-        writeFile(dockerDir.resolve("sonarqube-compose.yml"), DockerComposeTemplate.renderSonarQube(config));
         
-        // Criar script shell de inicialização para o banco sonar
-        Path initScriptsDir = dockerDir.resolve("init-scripts");
-        writeFile(initScriptsDir.resolve("01-init-sonar-db.sh"), DockerComposeTemplate.renderInitSonarDbScript());
+        // Docker Compose principal consolidado
+        writeFile(dockerDir.resolve("docker-compose.yml"), DockerComposeTemplate.renderMainDockerCompose(config));
+        
+        // Configuração do Prometheus
+        Path prometheusDir = dockerDir.resolve("prometheus");
+        writeFile(prometheusDir.resolve("prometheus.yml"), DockerComposeTemplate.renderPrometheusConfig(config));
+        
+        // Configurações do Grafana
+        Path grafanaDatasourcesDir = dockerDir.resolve("grafana/provisioning/datasources");
+        writeFile(grafanaDatasourcesDir.resolve("datasources.yml"), DockerComposeTemplate.renderGrafanaDatasources(config));
+        
+        Path grafanaDashboardsDir = dockerDir.resolve("grafana/provisioning/dashboards");
+        writeFile(grafanaDashboardsDir.resolve("dashboards.yml"), DockerComposeTemplate.renderGrafanaDashboards());
+        
+        // Script SQL de inicialização do PostgreSQL
+        Path postgresDir = dockerDir.resolve("postgres");
+        writeFile(postgresDir.resolve("01-create-databases.sql"), DockerComposeTemplate.renderPostgresInitSql(config));
+        
+        // Dockerfile na raiz do projeto
+        writeFile(config.projectRoot().resolve("Dockerfile"), DockerComposeTemplate.renderDockerfile(config));
     }
 
     private void createSourceFiles(ScaffoldConfig config) throws IOException {
