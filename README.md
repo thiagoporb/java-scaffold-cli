@@ -94,6 +94,38 @@ Este projeto segue o modelo **GitFlow** para gerenciamento de branches e release
 
 Para mais detalhes sobre o GitFlow, consulte o arquivo [docs/GITFLOW.md](docs/GITFLOW.md).
 
+## CI/CD com GitHub Actions
+
+Este projeto inclui workflows do GitHub Actions configurados para pipeline CI/CD:
+
+### Workflows Disponíveis
+
+1. **CI** (`.github/workflows/ci.yml`)
+   - Executa em push/PR para `main` e `develop`
+   - Build e testes em Java 21
+   - Upload de artefatos (JAR e relatórios)
+
+2. **Release** (`.github/workflows/release.yml`)
+   - Executa quando uma tag `v*` é criada
+   - Valida versão no `pom.xml`
+   - Gera release no GitHub com JAR anexado
+
+3. **Code Quality** (`.github/workflows/code-quality.yml`)
+   - Validações de qualidade de código
+   - Upload de cobertura (Codecov)
+
+4. **PR Validation** (`.github/workflows/pr-validation.yml`)
+   - Valida Conventional Commits em Pull Requests
+   - Executa testes e build
+   - Comenta status no PR
+
+### Requisitos
+
+Para os workflows funcionarem, o token do GitHub precisa ter escopo `workflow` habilitado:
+1. Acesse: https://github.com/settings/tokens
+2. Edite ou crie um token com permissão `workflow`
+3. Configure no Cursor/IDE ou use SSH para pushes
+
 ## Próximos passos sugeridos
 
 - Rodar o CLI para criar um novo serviço base.
