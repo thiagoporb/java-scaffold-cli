@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: [ '21' ]
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Configurar Java ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Compilar projeto
+        run: mvn clean compile -B
+      
+      - name: Executar testes
+        run: mvn test -B
+      
+      - name: Verificar build
+        run: mvn verify -B
+      
+      - name: Upload relatórios de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-java-${{ matrix.java-version }}
+          path: |
+            target/surefire-reports/**
+            target/site/**
+          retention-days: 30
+      
+      - name: Upload JAR gerado
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scaffold-cli-jar
+          path: target/scaffold-cli.jar
+          retention-days: 7
+

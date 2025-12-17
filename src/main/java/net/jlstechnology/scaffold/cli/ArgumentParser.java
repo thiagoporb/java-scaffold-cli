@@ -14,6 +14,7 @@ public final class ArgumentParser {
     private static final String OUTPUT_DIR_LONG = "--outputDir";
     private static final String OUTPUT_DIR_LONG_ALT = "--output-dir";
     private static final String FORCE_LONG = "--force";
+    private static final String CLOUD_LONG = "--cloud";
 
     /**
      * Analisa os parâmetros fornecidos e devolve uma representação estruturada.
@@ -26,6 +27,7 @@ public final class ArgumentParser {
         String artifactId = null;
         Path outputDir = null;
         boolean force = false;
+        String cloud = null;
 
         for (int index = 0; index < args.length; index++) {
             String current = args[index];
@@ -44,11 +46,19 @@ public final class ArgumentParser {
                     index++;
                 }
                 case FORCE_LONG -> force = true;
+                case CLOUD_LONG -> {
+                    String cloudValue = nextValue(args, index, current);
+                    if (!"aws".equals(cloudValue)) {
+                        throw new IllegalArgumentException("O argumento --cloud aceita apenas 'aws' como valor. Valor informado: " + cloudValue);
+                    }
+                    cloud = cloudValue;
+                    index++;
+                }
                 default -> throw new IllegalArgumentException("Argumento desconhecido: " + current);
             }
         }
 
-        return CliArguments.of(groupId, artifactId, outputDir, force);
+        return CliArguments.of(groupId, artifactId, outputDir, force, cloud);
     }
 
     private String nextValue(String[] args, int currentIndex, String argumentName) {

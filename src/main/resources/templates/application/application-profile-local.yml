@@ -2,11 +2,7 @@ spring:
   config:
     activate:
       on-profile: %1$s
-  datasource:
-    url: jdbc:postgresql://localhost:5432/%2$s
-    driver-class-name: org.postgresql.Driver
-    username: postgres
-    password: postgres
+  %3$s
   jpa:
     hibernate:
       ddl-auto: update
@@ -18,4 +14,4 @@ logging:
   level:
     root: INFO
     net.jlstechnology: DEBUG
-
+%4$s

@@ -1,0 +1,202 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  validate-pr:
+    name: Validate Pull Request
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for better analysis
+      
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Validar Conventional Commits
+        id: validate-commits
+        run: |
+          echo "=== DEBUG: Informações do Ambiente ==="
+          echo "Base branch: ${{ github.base_ref }}"
+          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+          echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+          echo "Head ref: ${{ github.head_ref }}"
+          echo "Base ref: ${{ github.base_ref }}"
+          echo ""
+          
+          echo "=== DEBUG: Estado do Git ==="
+          git log --oneline -5 || true
+          echo ""
+          git branch -a || true
+          echo ""
+          
+          # Fetch da branch base
+          echo "=== DEBUG: Fetching branches ==="
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }} 2>&1 || echo "⚠️ Falha ao fazer fetch da base"
+          echo ""
+          
+          # Obter commits usando merge-base (método mais confiável)
+          echo "=== DEBUG: Obtendo merge-base ==="
+          merge_base=$(git merge-base origin/${{ github.base_ref }} HEAD 2>&1 || echo "")
+          echo "Merge base: $merge_base"
+          
+          if [ -z "$merge_base" ] || [ "$merge_base" = "" ]; then
+            echo "⚠️ Não foi possível determinar merge-base"
+            echo "Tentando método alternativo..."
+            commits=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s" 2>&1 || echo "")
+          else
+            commits=$(git log $merge_base..HEAD --pretty=format:"%s" 2>&1 || echo "")
+          fi
+          
+          echo ""
+          echo "=== DEBUG: Commits encontrados ==="
+          if [ -z "$commits" ] || [ "$commits" = "" ]; then
+            echo "⚠️ Nenhum commit encontrado para validar"
+            echo "Listando últimos 10 commits:"
+            git log --oneline -10 || true
+            echo ""
+            echo "⚠️ Pulando validação - nenhum commit novo encontrado"
+            exit 0
+          fi
+          
+          echo "$commits"
+          echo ""
+          echo "=== DEBUG: Validando commits ==="
+          
+          invalid_commits=0
+          total_commits=0
+          
+          # Processar cada linha de commit usando here-string para evitar subshell
+          while IFS= read -r commit_msg || [ -n "$commit_msg" ]; do
+            # Remove espaços em branco
+            commit_msg=$(echo "$commit_msg" | xargs)
+            
+            if [ -z "$commit_msg" ] || [ "$commit_msg" = "" ]; then
+              continue
+            fi
+            
+            # Ignorar commits de merge automáticos do GitHub
+            if echo "$commit_msg" | grep -qE "^Merge .+ into .+"; then
+              echo "⏭️  Ignorando commit de merge automático: '$commit_msg'"
+              continue
+            fi
+            
+            # Ignorar commits de merge de branches (padrão Git)
+            if echo "$commit_msg" | grep -qE "^Merge branch .+"; then
+              echo "⏭️  Ignorando commit de merge de branch: '$commit_msg'"
+              continue
+            fi
+            
+            # Ignorar commits de merge de PRs
+            if echo "$commit_msg" | grep -qE "^Merge pull request"; then
+              echo "⏭️  Ignorando commit de merge de PR: '$commit_msg'"
+              continue
+            fi
+            
+            total_commits=$((total_commits + 1))
+            echo "Validando: '$commit_msg'"
+            
+            # Regex para Conventional Commits
+            # Aceita: tipo(escopo opcional): descrição
+            if echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([^)]+\))?: .+"; then
+              echo "  ✅ Válido"
+            else
+              echo "  ❌ Inválido"
+              echo "     Formato esperado: tipo(escopo): descrição"
+              echo "     Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
+              invalid_commits=$((invalid_commits + 1))
+            fi
+          done <<< "$commits"
+          
+          echo ""
+          echo "=== DEBUG: Resultado ==="
+          echo "Total de commits: $total_commits"
+          echo "Commits inválidos: $invalid_commits"
+          
+          if [ $invalid_commits -gt 0 ]; then
+            echo ""
+            echo "❌ Encontrados $invalid_commits commit(s) inválido(s) de $total_commits total"
+            exit 1
+          fi
+          
+          if [ $total_commits -eq 0 ]; then
+            echo ""
+            echo "⚠️ Nenhum commit foi processado"
+            exit 0
+          fi
+          
+          echo ""
+          echo "✅ Todos os $total_commits commit(s) seguem Conventional Commits"
+      
+      - name: Compilar projeto
+        id: compile
+        run: mvn clean compile -B
+      
+      - name: Executar testes
+        id: test
+        run: mvn test -B
+      
+      - name: Verificar build
+        id: verify
+        run: mvn verify -B
+      
+      - name: Comentário no PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              const botComment = comments.find(comment => 
+                comment.user.type === 'Bot' && 
+                (comment.body.includes('✅ Validação concluída') || comment.body.includes('❌ Validação concluída'))
+              );
+              
+              const status = '${{ job.status }}' === 'success' ? '✅' : '❌';
+              const body = `${status} **Validação concluída**
+              
+              - Compilação: ${{ steps.compile.outcome || 'skipped' }}
+              - Testes: ${{ steps.test.outcome || 'skipped' }}
+              - Build: ${{ steps.verify.outcome || 'skipped' }}
+              - Conventional Commits: ${{ steps.validate-commits.outcome || 'skipped' }}
+              `;
+              
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: body
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: body
+                });
+              }
+            } catch (error) {
+              console.log('Erro ao comentar no PR:', error.message);
+              // Não falha o workflow se não conseguir comentar
+            }
+

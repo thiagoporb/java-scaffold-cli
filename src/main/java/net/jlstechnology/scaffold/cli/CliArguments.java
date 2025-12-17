@@ -9,12 +9,14 @@ import java.nio.file.Path;
  * @param artifactId identificador do artefato Maven.
  * @param outputDir diretório de saída.
  * @param force     indica se o conteúdo existente deve ser sobrescrito.
+ * @param cloud     provider de cloud (ex: "aws"), opcional.
  */
 public record CliArguments(
         String groupId,
         String artifactId,
         Path outputDir,
-        boolean force) {
+        boolean force,
+        String cloud) {
 
     /**
      * Cria uma instância de {@link CliArguments} garantindo valores padrão para campos opcionais.
@@ -23,11 +25,12 @@ public record CliArguments(
      * @param artifactId valor informado para o artifactId.
      * @param outputDir caminho de saída, opcional.
      * @param force indica se sobrescreve diretório existente.
+     * @param cloud provider de cloud, opcional.
      * @return instância normalizada com valores padrão aplicados.
      */
-    public static CliArguments of(String groupId, String artifactId, Path outputDir, boolean force) {
+    public static CliArguments of(String groupId, String artifactId, Path outputDir, boolean force, String cloud) {
         Path normalizedOutput = outputDir != null ? outputDir : Path.of(".");
-        return new CliArguments(groupId, artifactId, normalizedOutput, force);
+        return new CliArguments(groupId, artifactId, normalizedOutput, force, cloud);
     }
 }
 

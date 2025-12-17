@@ -37,7 +37,7 @@ server:
     context-path: /api
 
 # ============================================================
-# ACTUATOR (Health, Metrics, Info)
+# ACTUATOR (Saúde, Métricas, Info)
 # ============================================================
 management:
   endpoints:

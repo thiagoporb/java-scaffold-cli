@@ -24,7 +24,7 @@ public final class InteractivePrompter {
     public static CliArguments resolve(CliArguments arguments) {
         String groupId = ensureValue(arguments.groupId(), "groupId");
         String artifactId = ensureValue(arguments.artifactId(), "artifactId");
-        return CliArguments.of(groupId, artifactId, arguments.outputDir(), arguments.force());
+        return CliArguments.of(groupId, artifactId, arguments.outputDir(), arguments.force(), arguments.cloud());
     }
 
     private static String ensureValue(String value, String label) {

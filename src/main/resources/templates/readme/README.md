@@ -44,13 +44,13 @@ Mantenha essas classes atualizadas conforme novos pacotes e recursos forem adici
   │   │   │       └── dashboards/
   │   │   │           └── dashboards.yml
   │   │   └── postgres/
-  │   │       └── 01-create-databases.sql
+  │   │       └── 01-create-databases.sql%20$s
   │   └── java/%3$s/
   │   ├── model/
   │   ├── repository/
   │   ├── service/
   │   │   └── mapper/
-  │   └── web/rest/
+  │   ├── web/rest/%21$s
   ├── src/main/resources/
   │   ├── application.yml
   │   ├── application-dev.yml
@@ -103,7 +103,7 @@ Isso iniciará todos os serviços:
 - **SonarQube** (porta 9000) - Análise estática de código
 - **Prometheus** (porta 9090) - Coleta de métricas
 - **Grafana** (porta 3000) - Visualização de métricas
-- **%1$s-service** (porta 8081) - Serviço gerado
+- **%1$s-service** (porta 8081) - Serviço gerado%17$s
 
 ### Parar todos os serviços
 
@@ -255,6 +255,8 @@ O Grafana é iniciado automaticamente pelo `docker-compose.yml` principal e perm
 - Use o datasource Prometheus para criar dashboards personalizados
 - Explore métricas do serviço usando PromQL
 
+%18$s
+
 ## Observabilidade
 
 O projeto está configurado para observabilidade completa:
@@ -264,7 +266,7 @@ O projeto está configurado para observabilidade completa:
 - Tempo de resposta, taxa de erro
 - Métricas customizadas do Spring Boot Actuator
 
-**Health Checks:**
+**Verificações de saúde:**
 - Liveness: http://localhost:8081/api/actuator/health/liveness
 - Readiness: http://localhost:8081/api/actuator/health/readiness
 - Health geral: http://localhost:8081/api/actuator/health
@@ -274,6 +276,54 @@ O projeto está configurado para observabilidade completa:
 - `/api/actuator/info` - Informações da aplicação
 - `/api/actuator/metrics` - Lista de métricas disponíveis
 - `/api/actuator/prometheus` - Métricas no formato Prometheus
+
+## Swagger UI - Documentação da API
+
+O projeto utiliza **SpringDoc OpenAPI** para gerar automaticamente a documentação interativa da API.
+
+**Acesso:**
+- **Swagger UI**: http://localhost:8081/api/swagger-ui/index.html
+- **OpenAPI JSON**: http://localhost:8081/api/v3/api-docs
+- **OpenAPI YAML**: http://localhost:8081/api/v3/api-docs.yaml
+
+**Funcionalidades:**
+- Interface web interativa para testar os endpoints da API
+- Documentação automática baseada nos contratos OpenAPI em `src/main/resources/openapi/`
+- Teste de requisições diretamente pelo navegador
+- Visualização de schemas, modelos e exemplos
+
+**Nota**: A documentação é gerada automaticamente a partir dos arquivos OpenAPI YAML localizados em `src/main/resources/openapi/`. Cada perfil (`dev`, `homol`, `prod`, etc.) possui seu próprio contrato OpenAPI.
+
+## Secrets Manager (DatabaseConfig)
+
+Quando o projeto é gerado com `--cloud aws`, o `DatabaseConfig` busca as credenciais do banco no AWS Secrets Manager.
+
+**Secret esperado (dev):**
+- Nome: `dev/{artifactId}/db`
+- Valor (LocalStack/dev):
+```json
+{
+  "username": "postgres",
+  "password": "postgres",
+  "host": "localhost",
+  "port": "5432",
+  "database": "{artifactId}"
+}
+```
+
+**Criar o secret no LocalStack (antes de subir em dev):**
+- Opção 1: executar `src/main/docker/localstack/init-aws.sh`
+- Opção 2 (manual):
+```bash
+awslocal secretsmanager create-secret \
+  --name dev/{artifactId}/db \
+  --secret-string '{"username":"postgres","password":"postgres","host":"localhost","port":"5432","database":"{artifactId}"}'
+```
+
+**Subir a aplicação em dev (após criar o secret):**
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+```
 
 ## Gatling
 
@@ -359,6 +409,8 @@ mvn clean verify
   ```bash
   mvn clean verify gatling:test
   ```
+
+%19$s
 
 ## Próximos passos
 

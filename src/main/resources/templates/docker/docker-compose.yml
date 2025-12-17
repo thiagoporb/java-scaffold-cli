@@ -133,7 +133,7 @@ services:
     networks:
       - microservices-net
 
-  # ============================================================
+%3$s  # ============================================================
   # %1$s-SERVICE - Microserviço Gerado
   # ============================================================
   # Spring Boot 4.0.0 - Serviço gerado pelo scaffold
@@ -175,7 +175,7 @@ volumes:
     name: microservices_prometheus_data
   grafana_data:
     name: microservices_grafana_data
-
+%4$s
 # ============================================================
 # NETWORKS - Rede Docker
 # ============================================================
