@@ -102,9 +102,17 @@ jobs:
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
         run: |
           echo "Executando análise SonarCloud..."
+          echo "DEBUG - Verificando secrets..."
+          echo "SONAR_ORGANIZATION está definido: $([ -z "$SONAR_ORGANIZATION" ] && echo 'NÃO' || echo 'SIM')"
+          echo "SONAR_PROJECT_KEY está definido: $([ -z "$SONAR_PROJECT_KEY" ] && echo 'NÃO' || echo 'SIM')"
+          echo "SONAR_TOKEN está definido: $([ -z "$SONAR_TOKEN" ] && echo 'NÃO' || echo 'SIM')"
           
           if [ -z "$SONAR_ORGANIZATION" ] || [ -z "$SONAR_PROJECT_KEY" ] || [ -z "$SONAR_TOKEN" ]; then
-            echo "❌ Erro: Secrets do SonarCloud não configurados"
+            echo "❌ Erro: Secrets do SonarCloud não configurados corretamente"
+            echo "Por favor, verifique se os seguintes secrets estão configurados em Settings > Secrets and variables > Actions:"
+            echo "  - SONAR_ORGANIZATION"
+            echo "  - SONAR_PROJECT_KEY"
+            echo "  - SONAR_TOKEN"
             exit 1
           fi
           
