@@ -103,7 +103,7 @@ aws:
     }
 
     /**
-     * Renderiza a seção AWS para ambientes remotos (AWS real).
+     * Renderiza a seção AWS para ambientes remotos (AWS em produção).
      *
      * @return seção AWS para AWS real.
      */
@@ -111,7 +111,7 @@ aws:
         String secretName = profile.profileName() + "/" + config.artifactLowerCase() + "/db";
         return """
 # ============================================================
-# AWS - AWS Real
+# AWS - Ambiente AWS (produção)
 # ============================================================
 aws:
   endpoint:  # Vazio = usa AWS padrão

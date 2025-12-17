@@ -266,7 +266,7 @@ O projeto está configurado para observabilidade completa:
 - Tempo de resposta, taxa de erro
 - Métricas customizadas do Spring Boot Actuator
 
-**Health Checks:**
+**Verificações de saúde:**
 - Liveness: http://localhost:8081/api/actuator/health/liveness
 - Readiness: http://localhost:8081/api/actuator/health/readiness
 - Health geral: http://localhost:8081/api/actuator/health

@@ -41,7 +41,7 @@ public class AwsConfig {
     /**
      * Cria provider de credenciais.
      * Em LocalStack, usa credenciais fixas (test/test).
-     * Em AWS real, usa as credenciais do ambiente (IAM role, env vars, etc).
+     * Em AWS real, usa as credenciais do ambiente (IAM role, variáveis de ambiente etc.).
      */
     private StaticCredentialsProvider credentialsProvider() {
         return StaticCredentialsProvider.create(
