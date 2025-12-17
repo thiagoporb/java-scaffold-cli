@@ -62,10 +62,17 @@ jobs:
 
             total_commits=$((total_commits + 1))
 
-            if echo "$commit_msg" | grep -P -q "^((:[^:[:space:]]+:|[\x{1F300}-\x{1FAFF}\x{1F1E6}-\x{1F1FF}]+)\s*)?(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([^)]+\))?: .+"; then
+            # Valida formato Conventional Commits (permite emoji opcional no início)
+            # Aceita: [emoji?]tipo(escopo?): descrição
+            if echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([^)]+\))?: .+"; then
+              echo "✅ $commit_msg"
+            elif echo "$commit_msg" | grep -qE "^[^[:space:]]+ (feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([^)]+\))?: .+"; then
+              # Permite emoji ou outro caractere no início seguido de espaço
               echo "✅ $commit_msg"
             else
               echo "❌ $commit_msg"
+              echo "   Formato esperado: [emoji?]tipo(escopo?): descrição"
+              echo "   Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
               invalid_commits=$((invalid_commits + 1))
             fi
           done <<< "$commits"
@@ -79,7 +86,13 @@ jobs:
       
       - name: Build + Test + Coverage (Jacoco)
         id: verify
-        run: mvn -B verify
+        continue-on-error: false
+        run: |
+          echo "Executando build, testes e verificação de cobertura..."
+          mvn -B verify || {
+            echo "❌ Build/Test/Coverage falhou. Verifique os logs acima."
+            exit 1
+          }
       
       - name: SonarCloud (Quality Gate obrigatório)
         id: sonar
@@ -88,12 +101,16 @@ jobs:
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
         run: |
+          echo "Executando análise SonarCloud..."
           mvn -B sonar:sonar \
             -Dsonar.organization=${SONAR_ORGANIZATION} \
             -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.qualitygate.wait=true \
-            -Dsonar.login=${SONAR_TOKEN}
+            -Dsonar.login=${SONAR_TOKEN} || {
+            echo "❌ SonarCloud falhou ou Quality Gate não passou"
+            exit 1
+          }
       
       - name: Comentário no PR
         if: always()
