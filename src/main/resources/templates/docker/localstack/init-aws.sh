@@ -40,6 +40,6 @@ echo "LocalStack pronto para uso!"
 echo "=============================================="
 echo ""
 echo "ENDPOINTS:"
-echo "  - LocalStack Health: http://localhost:4566/_localstack/health"
+echo "  - Saúde do LocalStack: http://localhost:4566/_localstack/health"
 echo ""
 
