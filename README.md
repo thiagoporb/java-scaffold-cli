@@ -23,6 +23,11 @@ O artefato gerado estará em `target/scaffold-cli.jar`.
 java -jar target/scaffold-cli.jar --groupId net.jlstechnology --artifactId synccta
 ```
 
+Exemplo com suporte a AWS:
+```bash
+java -jar target/scaffold-cli.jar --groupId net.jlstechnology --artifactId meuprojeto --cloud aws --outputDir /home/user/projetos --force
+```
+
 Se algum parâmetro obrigatório não for informado, o CLI solicitará o valor interativamente.
 
 ### Argumentos disponíveis
@@ -30,13 +35,14 @@ Se algum parâmetro obrigatório não for informado, o CLI solicitará o valor i
 - `--groupId` / `--group-id`: `groupId` Maven do projeto a ser gerado.
 - `--artifactId` / `--artifact-id`: `artifactId` Maven do projeto.
 - `--outputDir` / `--output-dir`: diretório destino (padrão: diretório atual).
+- `--cloud`: provedor de cloud (atualmente suportado: `aws`). Quando `--cloud aws` é informado, o scaffold gera automaticamente configuração do LocalStack no `docker-compose.yml` e adiciona dependências AWS SDK e Testcontainers LocalStack.
 - `--force`: sobrescreve o diretório de saída se já existir.
 
 ## Estrutura gerada
 
 O projeto final conterá:
 
-- `pom.xml` com Java 21, Spring Boot 3.3.4 e os plugins/dependências obrigatórios (Jacoco, Sonar, Spotless, Modernizer, OpenAPI Generator e Gatling).
+- `pom.xml` com Java 21, Spring Boot 4.0.0 e os plugins/dependências obrigatórios (Jacoco, Sonar, Spotless, Modernizer, OpenAPI Generator e Gatling).
 - Perfis Maven `dev`, `homol`, `prod`, `docker` e `docker-externo`, cada um com seu respectivo `application-<profile>.yml` e contrato OpenAPI.
 - Estrutura de pacotes Java (`model`, `repository`, `service`, `service.mapper`, `web.rest`) e testes espelhados.
 - Testes de arquitetura com ArchUnit e testes unitários de exemplo.

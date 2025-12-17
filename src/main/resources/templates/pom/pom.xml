@@ -33,7 +33,7 @@
         <openapi.generator.input>src/main/resources/openapi/%4$s-dev.yaml</openapi.generator.input>
         <openapi.generator.output>${project.build.directory}/generated-sources/openapi</openapi.generator.output>
         <openapi.generator.package>%5$s.web.api</openapi.generator.package>
-    </properties>
+%12$s%13$s    </properties>
 
     <!-- Gerenciamento centralizado de versões de dependências -->
     <dependencyManagement>
@@ -45,7 +45,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-        </dependencies>
+%14$s%15$s        </dependencies>
     </dependencyManagement>
 
     <!-- Dependências do projeto -->
@@ -144,7 +144,7 @@
             <version>${gatling.version}</version>
             <scope>test</scope>
         </dependency>
-    </dependencies>
+%16$s%17$s%18$s    </dependencies>
 
     <!-- Configuração de build e plugins -->
     <build>

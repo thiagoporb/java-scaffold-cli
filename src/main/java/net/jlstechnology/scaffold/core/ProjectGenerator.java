@@ -77,7 +77,7 @@ public final class ProjectGenerator {
             String profileName = profile.profileName();
             writeFile(
                     resourcesDir.resolve("application-" + profileName + ".yml"),
-                    ApplicationTemplate.renderProfile(profile, config.artifactLowerCase()));
+                    ApplicationTemplate.renderProfile(profile, config.artifactLowerCase(), config));
         }
 
         Path openApiDir = resourcesDir.resolve("openapi");
@@ -114,6 +114,24 @@ public final class ProjectGenerator {
         Path postgresDir = dockerDir.resolve("postgres");
         writeFile(postgresDir.resolve("01-create-databases.sql"), DockerComposeTemplate.renderPostgresInitSql(config));
         
+        // LocalStack (apenas se cloud=aws)
+        if ("aws".equals(config.cloud())) {
+            Path localstackDir = dockerDir.resolve("localstack");
+            String initScript = DockerComposeTemplate.renderLocalStackInitScript(config);
+            if (!initScript.isEmpty()) {
+                Path initScriptPath = localstackDir.resolve("init-aws.sh");
+                writeFile(initScriptPath, initScript);
+                // Tornar o script executável
+                try {
+                    java.util.Set<java.nio.file.attribute.PosixFilePermission> permissions = 
+                        java.nio.file.attribute.PosixFilePermissions.fromString("rwxr-xr-x");
+                    Files.setPosixFilePermissions(initScriptPath, permissions);
+                } catch (UnsupportedOperationException e) {
+                    // Windows não suporta PosixFilePermissions, ignorar
+                }
+            }
+        }
+        
         // Dockerfile na raiz do projeto
         writeFile(config.projectRoot().resolve("Dockerfile"), DockerComposeTemplate.renderDockerfile(config));
     }
@@ -143,6 +161,13 @@ public final class ProjectGenerator {
         writeFile(errorsDir.resolve("ProblemDetailsControllerAdvice.java"), JavaSourceTemplate.problemDetailsControllerAdvice(config));
         writeFile(
                 baseJavaDir.resolve("web/rest/ExemploResource.java"), JavaSourceTemplate.exemploResource(config));
+        
+        // AwsConfig (apenas se cloud=aws)
+        if ("aws".equals(config.cloud())) {
+            Path configDir = baseJavaDir.resolve("config");
+            writeFile(configDir.resolve("AwsConfig.java"), JavaSourceTemplate.awsConfig(config));
+            writeFile(configDir.resolve("DatabaseConfig.java"), JavaSourceTemplate.databaseConfig(config));
+        }
     }
 
     private void createTestFiles(ScaffoldConfig config) throws IOException {
