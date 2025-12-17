@@ -325,6 +325,34 @@ awslocal secretsmanager create-secret \
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
+## Gatling
+
+O scaffold já inclui uma simulação Gatling em Java (`src/test/java/%13$s/gatling/simulation/BasicSimulation.java`) que usa a DSL Java oficial.
+
+### Executar Gatling localmente
+
+```bash
+mvn gatling:test
+```
+
+Ou, caso prefira sempre recompilar toda a árvore:
+
+```bash
+mvn clean verify gatling:test
+```
+
+O relatório HTML será gerado em `target/gatling/<simulation-name>-<timestamp>/index.html`.
+
+**Importante**: Para executar os testes do Gatling com sucesso, a aplicação Spring Boot deve estar rodando. Inicie o serviço antes de executar o Gatling:
+
+```bash
+# Terminal 1: Iniciar o serviço
+docker compose -f src/main/docker/docker-compose.yml up %1$s-service
+
+# Terminal 2: Executar Gatling
+mvn gatling:test
+```
+
 ## Execução por profile
 
 %15$s
@@ -344,6 +372,7 @@ O build já vem com os principais plugins corporativos e suas responsabilidades:
 - **`modernizer-maven-plugin`**: detecta APIs Java obsoletas durante a fase `verify`, garantindo compatibilidade com o Java definido.
 - **`openapi-generator-maven-plugin`**: gera os contratos `web.api` a partir dos arquivos `src/main/resources/openapi/*.yaml`. Cada perfil aponta para seu próprio contrato.
 - **`openapi-generator`** gerado: `Request*DTO` e `Response*DTO` já estão importados no `ExemploResource`.
+- **`gatling-maven-plugin`**: executa os cenários localizados em `src/test/java/%14$s/gatling/simulation`. Há uma simulação de exemplo em `BasicSimulation.java`; execute `mvn gatling:test` (ou `mvn clean verify`) para compilar a simulação e abrir os relatórios em `target/gatling`.
 
 ```
 mvn clean verify
@@ -375,6 +404,10 @@ mvn clean verify
   mvn openapi-generator:generate -Pdev
   ```
 
+- **`gatling-maven-plugin`**: gera e executa as simulações de carga.
+
+  ```bash
+  mvn clean verify gatling:test
   ```
 
 %19$s

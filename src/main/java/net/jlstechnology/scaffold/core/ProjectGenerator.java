@@ -31,6 +31,7 @@ public final class ProjectGenerator {
         createDockerFiles(config);
         createSourceFiles(config);
         createTestFiles(config);
+        createGatlingFiles(config);
     }
 
     private void prepareTargetDirectory(Path projectRoot, boolean force) throws IOException {
@@ -193,6 +194,17 @@ public final class ProjectGenerator {
         writeFile(
                 baseTestDir.resolve("web/rest/errors/ProblemDetailsControllerAdviceTest.java"),
                 TestTemplate.controllerAdviceTest(config));
+    }
+
+    private void createGatlingFiles(ScaffoldConfig config) throws IOException {
+        Path gatlingDir = config.projectRoot()
+                .resolve("src/test/java")
+                .resolve(config.basePackagePath())
+                .resolve("gatling")
+                .resolve("simulation");
+        writeFile(
+                gatlingDir.resolve("BasicSimulation.java"),
+                JavaSourceTemplate.gatlingSimulation(config));
     }
 
     private void writeFile(Path target, String content) throws IOException {
