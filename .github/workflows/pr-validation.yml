@@ -96,16 +96,24 @@ jobs:
       
       - name: SonarCloud (Quality Gate obrigatório)
         id: sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
         run: |
           echo "Executando análise SonarCloud..."
-          echo "Verificando variáveis de ambiente..."
+          
+          if [ -z "$SONAR_ORGANIZATION" ] || [ -z "$SONAR_PROJECT_KEY" ] || [ -z "$SONAR_TOKEN" ]; then
+            echo "❌ Erro: Secrets do SonarCloud não configurados"
+            exit 1
+          fi
           
           mvn -B sonar:sonar \
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+            -Dsonar.organization="$SONAR_ORGANIZATION" \
+            -Dsonar.projectKey="$SONAR_PROJECT_KEY" \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.qualitygate.wait=true \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }} || {
+            -Dsonar.login="$SONAR_TOKEN" || {
             echo "❌ SonarCloud falhou ou Quality Gate não passou"
             exit 1
           }
