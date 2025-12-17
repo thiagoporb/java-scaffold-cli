@@ -28,8 +28,6 @@
         <sonar.version>3.10.0.2594</sonar.version>
         <archunit.version>1.3.0</archunit.version>
         <springdoc.version>2.8.14</springdoc.version>
-        <gatling.version>3.13.5</gatling.version>
-        <gatling.plugin.version>4.16.3</gatling.plugin.version>
         <openapi.generator.input>src/main/resources/openapi/%4$s-dev.yaml</openapi.generator.input>
         <openapi.generator.output>${project.build.directory}/generated-sources/openapi</openapi.generator.output>
         <openapi.generator.package>%5$s.web.api</openapi.generator.package>
@@ -135,13 +133,6 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Gatling (testes de carga e desempenho) -->
-        <dependency>
-            <groupId>io.gatling.highcharts</groupId>
-            <artifactId>gatling-charts-highcharts</artifactId>
-            <version>${gatling.version}</version>
             <scope>test</scope>
         </dependency>
 %16$s%17$s%18$s    </dependencies>
@@ -338,18 +329,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <!-- Plugin Gatling (testes de carga) -->
-            <plugin>
-                <groupId>io.gatling</groupId>
-                <artifactId>gatling-maven-plugin</artifactId>
-                <version>${gatling.plugin.version}</version>
-                <configuration>
-                    <runMultipleSimulations>true</runMultipleSimulations>
-                    <includes>
-                        <include>%10$s.gatling.simulation.BasicSimulation</include>
-                    </includes>
-                </configuration>
             </plugin>
             <!-- Plugin Sonar (análise estática de código) -->
             <!-- 

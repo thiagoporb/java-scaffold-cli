@@ -22,7 +22,6 @@ public final class JavaSourceTemplate {
     private static final String VALIDATION_PROBLEM_TEMPLATE = TemplateLoader.load("java/ValidationProblem.java");
     private static final String BUSINESS_RULE_PROBLEM_TEMPLATE = TemplateLoader.load("java/BusinessRuleProblem.java");
     private static final String PROBLEM_DETAILS_CONTROLLER_ADVICE_TEMPLATE = TemplateLoader.load("java/ProblemDetailsControllerAdvice.java");
-    private static final String BASIC_SIMULATION_TEMPLATE = TemplateLoader.load("java/BasicSimulation.java");
     private static final String AWS_CONFIG_TEMPLATE = TemplateLoader.load("java/AwsConfig.java");
     private static final String DATABASE_CONFIG_TEMPLATE = TemplateLoader.load("java/DatabaseConfig.java");
 
