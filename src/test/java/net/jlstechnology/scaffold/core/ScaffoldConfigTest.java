@@ -16,7 +16,7 @@ class ScaffoldConfigTest {
     @Test
     @DisplayName("Deve derivar corretamente os valores a partir dos argumentos")
     void shouldDeriveValues() {
-        CliArguments arguments = CliArguments.of("net.jlstechnology", "sync-cta", Path.of("/tmp"), false);
+        CliArguments arguments = CliArguments.of("net.jlstechnology", "sync-cta", Path.of("/tmp"), false, null);
         ScaffoldConfig config = ScaffoldConfig.from(arguments);
 
         assertEquals("net.jlstechnology", config.groupId());
@@ -27,6 +27,18 @@ class ScaffoldConfigTest {
         assertEquals("sync-cta", config.artifactLowerCase());
         assertTrue(config.projectRoot().toString().endsWith("sync-cta"));
         assertEquals(Path.of("net/jlstechnology/synccta"), config.basePackagePath());
+        assertEquals(null, config.cloud());
+    }
+
+    @Test
+    @DisplayName("Deve derivar corretamente os valores com cloud aws")
+    void shouldDeriveValuesWithCloudAws() {
+        CliArguments arguments = CliArguments.of("net.jlstechnology", "sync-cta", Path.of("/tmp"), false, "aws");
+        ScaffoldConfig config = ScaffoldConfig.from(arguments);
+
+        assertEquals("net.jlstechnology", config.groupId());
+        assertEquals("sync-cta", config.artifactId());
+        assertEquals("aws", config.cloud());
     }
 }
 

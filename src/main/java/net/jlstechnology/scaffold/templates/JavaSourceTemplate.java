@@ -23,6 +23,8 @@ public final class JavaSourceTemplate {
     private static final String BUSINESS_RULE_PROBLEM_TEMPLATE = TemplateLoader.load("java/BusinessRuleProblem.java");
     private static final String PROBLEM_DETAILS_CONTROLLER_ADVICE_TEMPLATE = TemplateLoader.load("java/ProblemDetailsControllerAdvice.java");
     private static final String BASIC_SIMULATION_TEMPLATE = TemplateLoader.load("java/BasicSimulation.java");
+    private static final String AWS_CONFIG_TEMPLATE = TemplateLoader.load("java/AwsConfig.java");
+    private static final String DATABASE_CONFIG_TEMPLATE = TemplateLoader.load("java/DatabaseConfig.java");
 
     private JavaSourceTemplate() {
         // Classe utilitária, não deve ser instanciada.
@@ -141,6 +143,26 @@ public final class JavaSourceTemplate {
 
     public static String gatlingSimulation(ScaffoldConfig config) {
         return String.format(BASIC_SIMULATION_TEMPLATE, config.basePackage());
+    }
+
+    /**
+     * Classe de configuração AWS.
+     *
+     * @param config configuração calculada.
+     * @return conteúdo da classe AwsConfig.
+     */
+    public static String awsConfig(ScaffoldConfig config) {
+        return String.format(AWS_CONFIG_TEMPLATE, config.basePackage());
+    }
+
+    /**
+     * Classe de configuração do banco usando Secrets Manager.
+     *
+     * @param config configuração calculada.
+     * @return conteúdo da classe DatabaseConfig.
+     */
+    public static String databaseConfig(ScaffoldConfig config) {
+        return String.format(DATABASE_CONFIG_TEMPLATE, config.basePackage(), config.artifactLowerCase());
     }
 }
 

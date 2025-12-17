@@ -2,18 +2,7 @@ spring:
   config:
     activate:
       on-profile: %1$s
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://db-server:5432/%2$s}
-    driver-class-name: org.postgresql.Driver
-    username: ${DB_USERNAME:db_user}
-    password: ${DB_PASSWORD:db_password}
-    hikari: # Configurações específicas para ambientes remotos
-      maximum-pool-size: 20 # Pool maior para ambientes de produção
-      minimum-idle: 10
-      idle-timeout: 300000
-      max-lifetime: 1800000
-      connection-timeout: 30000
-      leak-detection-threshold: 60000
+  %3$s
   jpa:
     hibernate:
       ddl-auto: none
@@ -25,4 +14,4 @@ logging:
   level:
     root: INFO
     net.jlstechnology: INFO
-
+%4$s

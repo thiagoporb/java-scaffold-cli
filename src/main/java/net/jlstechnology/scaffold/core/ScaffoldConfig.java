@@ -14,6 +14,7 @@ import java.nio.file.Path;
  * @param artifactLowerCase representação minúscula para uso em arquivos.
  * @param projectRoot diretório raiz a ser criado.
  * @param basePackagePath caminho relativo utilizado para criação dos pacotes.
+ * @param cloud provider de cloud (ex: "aws"), opcional.
  */
 public record ScaffoldConfig(
         String groupId,
@@ -23,7 +24,8 @@ public record ScaffoldConfig(
         String artifactPascalCase,
         String artifactLowerCase,
         Path projectRoot,
-        Path basePackagePath) {
+        Path basePackagePath,
+        String cloud) {
 
     /**
      * Cria a configuração a partir dos argumentos fornecidos.
@@ -46,7 +48,8 @@ public record ScaffoldConfig(
                 artifactPascal,
                 artifactLower,
                 projectRoot,
-                basePackagePath);
+                basePackagePath,
+                arguments.cloud());
     }
 }
 
