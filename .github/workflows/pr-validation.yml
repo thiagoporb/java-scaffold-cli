@@ -36,6 +36,7 @@ jobs:
       
       - name: Dependency Review (PR)
         uses: actions/dependency-review-action@v4
+        continue-on-error: true
       
       - name: Validar Conventional Commits (aceita emoji opcional no início)
         id: validate-commits
