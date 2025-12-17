@@ -8,6 +8,7 @@ jobs:
   build-and-test:
     name: Build, Test, Sonar (push)
     runs-on: ubuntu-latest
+    # environment: sonarcloud  # Descomente se usar environment secrets
     
     steps:
       - name: Checkout código

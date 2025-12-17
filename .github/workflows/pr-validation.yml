@@ -9,6 +9,7 @@ jobs:
   validate-pr:
     name: Validate Pull Request
     runs-on: ubuntu-latest
+    # environment: sonarcloud  # Descomente se usar environment secrets
     concurrency:
       group: pr-${{ github.event.pull_request.number || github.ref }}-validation
       cancel-in-progress: true
