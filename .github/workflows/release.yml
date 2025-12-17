@@ -59,6 +59,8 @@ jobs:
           ls -lh target/scaffold-cli.jar
           echo "✅ JAR gerado com sucesso"
       
+      # SonarCloud pode ser pulado na release para agilizar (já rodou no push).
+
       - name: Criar Release no GitHub
         uses: softprops/action-gh-release@v1
         with:
@@ -68,4 +70,5 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
