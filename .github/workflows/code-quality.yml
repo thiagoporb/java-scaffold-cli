@@ -1,10 +1,9 @@
-name: Code Quality
+name: Code Quality (manual)
 
+# Workflow manual para rodar checks quando necessário,
+# evitando duplicidade com PR/CI.
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
   quality-checks:
@@ -22,13 +21,8 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: Verificar formatação de código
-        run: |
-          echo "Executando validações de qualidade..."
-          mvn clean compile test-compile -B
-      
-      - name: Executar testes com cobertura
-        run: mvn test -B
+      - name: Build + Test + Coverage (Jacoco)
+        run: mvn -B verify
       
       - name: Upload relatórios de cobertura
         if: always()
@@ -38,4 +32,3 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
-
